@@ -3,6 +3,7 @@ import chalk from "chalk"
 import figlet from "figlet";
 import { runCliMode } from "../modes/cli";
 import { runTelegramMode } from "../modes/telegram";
+import { startDashboardServer } from "../modes/web/dashboard";
 
 const BANNER_FONT = 'ANSI Shadow';
 const SHADOW = chalk.hex('#5b4d9e');
@@ -41,6 +42,7 @@ export async function runWakeup() {
         options:[
             {value:"cli" , label:"CLI"},
             {value:"telegram" , label:"Telegram"},
+            {value:"dashboard" , label:"Web Dashboard"},
             {value:"exit" , label:"Exit"}
         ]
     });
@@ -55,5 +57,8 @@ export async function runWakeup() {
     }
     else if(mode === "telegram"){
         await runTelegramMode()
+    }
+    else if(mode === "dashboard"){
+        await startDashboardServer();
     }
 }
