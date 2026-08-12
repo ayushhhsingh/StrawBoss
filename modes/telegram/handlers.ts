@@ -55,6 +55,54 @@ export function registerHandlers(bot: Telegraf) {
     })().catch(console.error)
   });
 
+  bot.command("weather", async (ctx) => {
+    if (!isOwner(ctx.chat.id)) return;
+    const city = commandArg(ctx.message.text, "weather");
+    if (!city) {
+      return ctx.reply("Usage: `/weather <city>`", { parse_mode: "Markdown" });
+    }
+
+    await ctx.reply(`🌦 Checking weather for *${city}*…`, { parse_mode: "Markdown" });
+
+    try {
+      const geoResponse = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`,
+      );
+      const geoData = (await geoResponse.json()) as {
+        results?: Array<{ name?: string; country?: string; latitude?: number; longitude?: number }>;
+      };
+      const result = geoData.results?.[0];
+
+      if (!result?.latitude || !result?.longitude) {
+        return ctx.reply(`No weather data found for *${city}*.`, { parse_mode: "Markdown" });
+      }
+
+      const weatherResponse = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${result.latitude}&longitude=${result.longitude}&current_weather=true&timezone=auto`,
+      );
+      const weatherData = (await weatherResponse.json()) as {
+        current_weather?: {
+          temperature?: number;
+          windspeed?: number;
+          weathercode?: number;
+        };
+      };
+      const current = weatherData.current_weather;
+      return ctx.reply(
+        [
+          `🌤 *${result.name || city}*, ${result.country || ""}`,
+          `Temperature: ${current?.temperature ?? "n/a"}°C`,
+          `Wind: ${current?.windspeed ?? "n/a"} km/h`,
+          `Condition code: ${current?.weathercode ?? "n/a"}`,
+        ].join("\n"),
+        { parse_mode: "Markdown" },
+      );
+    } catch (error) {
+      console.error(error);
+      return ctx.reply("Weather lookup failed. Please try again later.", { parse_mode: "Markdown" });
+    }
+  });
+
     bot.action(/^plan_toggle:(.+)$/, async (ctx) => {
     if (!isOwner(ctx.chat!.id)) return ctx.answerCbQuery();
     const s = planSessions.get(ctx.chat!.id);
