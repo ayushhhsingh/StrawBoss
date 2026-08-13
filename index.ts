@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import { runWakeup } from "./tui/wakeup";
+import { startDashboardServer } from "./modes/web/dashboard";
 
 const program = new Command();
 
@@ -12,9 +13,16 @@ program
 
 program
   .command("wakeup")
-  .description("Show the banner and pick cli or telegram mode")
+  .description("Show the banner and pick cli, telegram, or web dashboard mode")
   .action(async () => {
     await runWakeup()
+  });
+
+program
+  .command("dashboard")
+  .description("Start the web dashboard")
+  .action(async () => {
+    await startDashboardServer();
   });
 
 await program.parseAsync(process.argv);
